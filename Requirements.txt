@@ -1,0 +1,14 @@
+There are two types of users: Reader and Administrator(Admin)
+Main difference between both users is that Admin can manipulate with mouse and keyboard, but Reader only with TV remote.
+Application comes with a number of preset News Stations. Every News Station contains Name and URL of the RSS feed.
+Admin must be able to add, remove or edit records of the News Station, including its name and URLs.
+List of the available News Stations must be presented for the Reader.
+Reader must be able to select News Station from the list.
+After user selects New Station, RSS feed must be read and stored as a list of available items with the title and url.
+Reader must be able to open Navigation Drawer and list of available RSS items must be presented for a Reader in the Navigation Drawer.
+Reader must be able to select item from the list using TV remote, and click OK.
+When Reader clicks Ok, the HTML page corresponding to the item's URL must be dowloaded from Internet and displayed on the main page in the WebView widget.
+Navigation Drawer must closed after item is selected.
+Reader must be able to scroll HTML page with a TV remove.
+Reader must be able to reopen Navigation Drawer and select another item.
+When user closes application, last selected item must be remembered and reopened when user starts or resumes application. 
