@@ -38,9 +38,8 @@ public class MainActivity extends AppCompatActivity
 
         currentChannel = new IRssChannel() {
             @Override public String getName() { return "РБК - Все материалы"; }
-            @Override public URL getLink() {
-                try { return new URL("http://static.feed.rbc.ru/rbc/logical/footer/news.rss"); } catch (MalformedURLException e) {  e.printStackTrace();  }
-                return null;
+            @Override public String getLink() {
+                return "http://static.feed.rbc.ru/rbc/logical/footer/news.rss";
             }
 
             @Override

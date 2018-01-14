@@ -19,7 +19,7 @@ public interface IRssChannel {
      *
      * @return link to the RSS feed
      */
-     URL getLink();
+     String getLink();
 
     /**
      *
