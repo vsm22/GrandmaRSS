@@ -1,15 +1,14 @@
 package com.kotlandry.grandma.rss;
 
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
@@ -18,14 +17,13 @@ import android.widget.ListView;
 import com.kotlandry.grandma.rss.objects.IRssChannel;
 import com.kotlandry.grandma.rss.objects.IRssItem;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        DownloadCallback<UpdateChannelResult>{
 
     IRssChannel       currentChannel = null;
     List<IRssChannel> listOfChannels = null;
@@ -77,7 +75,7 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    /** update Navigation Drawer with a new list of Rss Items
+    /** Update Navigation Drawer with a new list of Rss Items
      *
      * @param listOfItems
      */
@@ -90,8 +88,12 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /** Start asynchronous process of updating items of selected news channel.
+     * @param newsChannel
+     */
     private void updateNewsChannel(IRssChannel newsChannel){
-
+        UpdateChannelAsyncTask task = new UpdateChannelAsyncTask(this);
+        task.execute(newsChannel);
     }
 
     @Override
@@ -149,5 +151,53 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+
+
+    // ========== Implement DownloadCallback<UpdateChannelResult> =========
+
+    /**
+     * Indicates that the callback handler needs to update its appearance or information based on
+     * the result of the task. Expected to be called from the main thread.
+     *
+     * @param result
+     */
+    @Override
+    public void updateFromDownload(UpdateChannelResult result) {
+        Exception e = result.getException();
+        if(e == null){
+            updateNavigationDrawer(result.getResult());
+        }else{
+            Log.e("Update News Channel", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get the device's active network status in the form of a NetworkInfo object.
+     */
+    @Override
+    public NetworkInfo getActiveNetworkInfo() {
+        return null;
+    }
+
+    /**
+     * Indicate to callback handler any progress update.
+     *
+     * @param progressCode    must be one of the constants defined in DownloadCallback.Progress.
+     * @param percentComplete must be 0-100.
+     */
+    @Override
+    public void onProgressUpdate(int progressCode, int percentComplete) {
+
+    }
+
+    /**
+     * Indicates that the download operation has finished. This method is called even if the
+     * download hasn't completed successfully.
+     */
+    @Override
+    public void finishDownloading() {
+
     }
 }

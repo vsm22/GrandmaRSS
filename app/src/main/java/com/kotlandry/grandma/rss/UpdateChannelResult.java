@@ -15,7 +15,7 @@ public final class UpdateChannelResult {
 
     public List<IRssItem> getResult() {  return result;  }
     public void setResult(List<IRssItem> result) { this.result = result;  }
-    public Exception getExeption() { return ex; }
+    public Exception getException() { return ex; }
     public void setExeption(Exception ex) { this.ex = ex; }
 
     public UpdateChannelResult(List<IRssItem> result) {
