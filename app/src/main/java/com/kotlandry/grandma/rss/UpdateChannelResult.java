@@ -10,15 +10,15 @@ import java.util.List;
 
 public final class UpdateChannelResult {
 
-    private String result;
+    private List<IRssItem> result;
     private Exception ex;
 
-    public String getResult() {  return result;  }
-    public void setResult(String result) { this.result = result;  }
+    public List<IRssItem> getResult() {  return result;  }
+    public void setResult(List<IRssItem> result) { this.result = result;  }
     public Exception getExeption() { return ex; }
     public void setExeption(Exception ex) { this.ex = ex; }
 
-    public UpdateChannelResult(String result) {
+    public UpdateChannelResult(List<IRssItem> result) {
         this.result = result;
         ex = null;
     }
