@@ -6,14 +6,21 @@ import android.util.Log;
 import com.kotlandry.grandma.rss.objects.IRssChannel;
 import com.kotlandry.grandma.rss.objects.IRssItem;
 
-import java.io.BufferedReader;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Created by Sergey on 1/13/2018.
@@ -45,7 +52,11 @@ public class UpdateChannelAsyncTask extends AsyncTask<IRssChannel, Integer, Upda
      */
     @Override
     protected UpdateChannelResult doInBackground(IRssChannel... iRssChannels) {
-         return null;
+        if(iRssChannels != null && iRssChannels.length > 0){
+            return dowloadRssFeed(iRssChannels[0]);
+        }else{
+            return new UpdateChannelResult(new Exception("List of Channels is empty"));
+        }
     }
 
     private UpdateChannelResult dowloadRssFeed(IRssChannel channel){
@@ -54,21 +65,68 @@ public class UpdateChannelAsyncTask extends AsyncTask<IRssChannel, Integer, Upda
 
         if(link != null && !link.isEmpty()){
             try {
+
                 URL url =  new URL(link);
                 InputStream stream = url.openStream();
-                BufferedReader buffer = new BufferedReader(new InputStreamReader(stream));
-                while(buffer.ready()){
-                   buffer.readLine();
-                }
-                return new UpdateChannelResult("");
+                List<IRssItem> items = parseStream(stream);
+                return new UpdateChannelResult(items);
 
-            } catch (java.io.IOException e) {
-                Log.e("dowloadRssFeed","MalformedUrl is not correct: " + link);
+            } catch ( Exception e) {
+                Log.e("dowloadRssFeed",link + ": " + e.getMessage(), e);
                 return new UpdateChannelResult(e);
             }
         }
         return new UpdateChannelResult(new Exception("Channel URL is null or Empty"));
 
+    }
+
+    private List<IRssItem> parseStream(InputStream stream) throws ParserConfigurationException, IOException, SAXException {
+
+        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        Document feedDoc = builder.parse(stream);
+
+         List<IRssItem> listItem = new ArrayList<>();
+         NodeList itemNodeList = feedDoc.getElementsByTagName("item");
+         for(int i=0; i<itemNodeList.getLength(); i++){
+
+             try {
+
+                 Element item = (Element) itemNodeList.item(i);
+
+                 String title = item.getElementsByTagName("title").item(0).getTextContent();
+                 String link = item.getElementsByTagName("link").item(0).getTextContent();
+                 String pubDate = item.getElementsByTagName("pubDate").item(0).getTextContent();
+
+                 RssItem rssItem = new RssItem(title, link, pubDate);
+                 listItem.add(rssItem);
+
+             }catch (Exception e){
+                 Log.e("parseStream","item is malformed", e);
+             }
+
+         }
+
+         return listItem;
+    }
+
+
+    public static class RssItem implements IRssItem{
+
+        private String title;
+        private String link;
+        private String pubDate;
+
+        @Override  public String getTitle() { return title; }
+        @Override  public String getLink() { return link; }
+        @Override  public String getPubDate() { return pubDate; }
+
+        public RssItem(String title, String link, String pubDate) {
+
+            this.title = title;
+            this.link = link;
+            this.pubDate = pubDate;
+
+        }
     }
 
 
