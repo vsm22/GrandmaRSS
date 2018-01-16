@@ -6,22 +6,10 @@ package com.kotlandry.grandma.rss.objects;
 
 public interface IRssItem {
 
-    /**
-     *
-     * @return article title
-     */
      String getTitle();
-
-    /**
-     *
-     * @return URL link to an article
-     */
      String getLink();
-
-    /**
-     *
-     * @return date when article was creqated
-     */
      String getPubDate();
+     @Override
+     String toString();
 
 }

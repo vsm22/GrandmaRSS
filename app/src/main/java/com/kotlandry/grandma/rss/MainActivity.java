@@ -9,8 +9,10 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -47,7 +49,16 @@ public class MainActivity extends AppCompatActivity
 
         listOfChannels = new ArrayList<IRssChannel>();
         listOfChannels.add(currentChannel);
-        listOfChannels.add(currentChannel);
+        listOfChannels.add(new IRssChannel() {
+                               @Override public String getName() { return "Интерфакс"; }
+                               @Override public String getLink() {
+                                   return "http://www.interfax.ru/rss.asp";
+                               }
+                             @Override
+                               public Date getPubDate() { return new Date(); }
+                          }
+
+        );
 
     }
 
@@ -71,6 +82,7 @@ public class MainActivity extends AppCompatActivity
         mDrawerList   = (ListView)findViewById(R.id.nav_view);
 
         updateNavigationDrawer(listOfItems);
+        updateNewsChannel(currentChannel);
 
     }
 
@@ -83,6 +95,7 @@ public class MainActivity extends AppCompatActivity
 
         if(listOfItems != null){
             mDrawerList.setAdapter(new ArrayAdapter<IRssItem>(this, R.layout.drawer_list_item, listOfItems ));
+            drawer.openDrawer(Gravity.START);
             //mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
         }
 
@@ -92,6 +105,7 @@ public class MainActivity extends AppCompatActivity
      * @param newsChannel
      */
     private void updateNewsChannel(IRssChannel newsChannel){
+        if(newsChannel == null) return;
         UpdateChannelAsyncTask task = new UpdateChannelAsyncTask(this);
         task.execute(newsChannel);
     }
@@ -106,11 +120,48 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Callback method. Inflating ActionBar from the main menu in resource
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    /**
+     * Prepare the Screen's standard options menu to be displayed.  This is
+     * called right before the menu is shown, every time it is shown.  You can
+     * use this method to efficiently enable/disable items or otherwise
+     * dynamically modify the contents.
+     * <p>
+     * <p>The default implementation updates the system menu items based on the
+     * activity's state.  Deriving classes should always call through to the
+     * base class implementation.
+     *
+     * @param menu The options menu as last shown or first initialized by
+     *             onCreateOptionsMenu().
+     * @return You must return true for the menu to be displayed;
+     * if you return false it will not be shown.
+     * @see #onCreateOptionsMenu
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        boolean result = super.onPrepareOptionsMenu(menu);
+        if( result && listOfChannels != null && !listOfChannels.isEmpty()){
+          MenuItem newsItem = menu.findItem(R.id.action_news_channel);
+          if(newsItem.hasSubMenu()){
+              SubMenu submenu = newsItem.getSubMenu();
+              for(int i=0; i < listOfChannels.size(); i++){
+                  submenu.add( Menu.NONE , i, i, listOfChannels.get(i).getName());
+              }
+          }
+        }
+        return result;
     }
 
     @Override
@@ -119,12 +170,17 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
+        //Settings has unique Id
         if (id == R.id.action_settings) {
             return true;
         }
-
+        // Other is the position of news channel in the list:
+        if( id >=0 && id < listOfChannels.size() ){
+            currentChannel = listOfChannels.get(id);
+            getSupportActionBar().setTitle(currentChannel.getName());
+            updateNewsChannel(currentChannel);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

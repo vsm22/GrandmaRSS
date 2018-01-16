@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Новости Для Бабушки</string>
+    <string name="navigation_drawer_open">Открыть новостную ленту</string>
+    <string name="navigation_drawer_close">Закрыть новостную ленту</string>
+    <string name="action_settings">Установки</string>
+    <string name="action_news_channel">Новостные Каналы</string>
+</resources>
