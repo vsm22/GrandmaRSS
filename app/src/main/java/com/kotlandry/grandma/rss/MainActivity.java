@@ -13,6 +13,9 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
+import android.view.View;
+import android.webkit.WebView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -24,7 +27,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,
+        implements  AdapterView.OnItemClickListener,
         DownloadCallback<UpdateChannelResult>{
 
     IRssChannel       currentChannel = null;
@@ -95,8 +98,8 @@ public class MainActivity extends AppCompatActivity
 
         if(listOfItems != null){
             mDrawerList.setAdapter(new ArrayAdapter<IRssItem>(this, R.layout.drawer_list_item, listOfItems ));
-            drawer.openDrawer(Gravity.START);
-            //mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+            drawer.openDrawer(GravityCompat.START);
+            mDrawerList.setOnItemClickListener(this);
         }
 
     }
@@ -184,32 +187,34 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    /**
+     * Callback method to be invoked when an item in this AdapterView has
+     * been clicked.
+     * <p>
+     * Implementers can call getItemAtPosition(position) if they need
+     * to access the data associated with the selected item.
+     *
+     * @param parent   The AdapterView where the click happened.
+     * @param view     The view within the AdapterView that was clicked (this
+     *                 will be a view provided by the adapter)
+     * @param position The position of the view in the adapter.
+     * @param id       The row id of the item that was clicked.
+     */
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if(listOfItems != null){
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+            IRssItem item = listOfItems.get(position);
+            if(item != null) {
+                WebView articleView =  findViewById(R.id.article_view);
+                articleView.loadUrl(item.getLink());
+                drawer.closeDrawer(GravityCompat.START);
+            }
 
         }
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
-
-
 
     // ========== Implement DownloadCallback<UpdateChannelResult> =========
 
@@ -223,7 +228,8 @@ public class MainActivity extends AppCompatActivity
     public void updateFromDownload(UpdateChannelResult result) {
         Exception e = result.getException();
         if(e == null){
-            updateNavigationDrawer(result.getResult());
+            listOfItems = result.getResult();
+            updateNavigationDrawer(listOfItems);
         }else{
             Log.e("Update News Channel", e.getMessage(), e);
         }
@@ -256,4 +262,6 @@ public class MainActivity extends AppCompatActivity
     public void finishDownloading() {
 
     }
+
+
 }
