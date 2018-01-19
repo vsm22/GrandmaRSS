@@ -1,15 +1,14 @@
 package com.kotlandry.grandma.rss;
 
+import android.app.DialogFragment;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -18,21 +17,35 @@ import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.kotlandry.grandma.rss.objects.IRssChannel;
 import com.kotlandry.grandma.rss.objects.IRssItem;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements  AdapterView.OnItemClickListener,
-        DownloadCallback<UpdateChannelResult>{
+        DownloadCallback<UpdateChannelResult>,
+        IEditNewsChannels{
 
-    IRssChannel       currentChannel = null;
-    List<IRssChannel> listOfChannels = null;
-    List<IRssItem>    listOfItems = null;
+    private static final String CHANNELS_FILE = "channels";
+
+    private IRssChannel       currentChannel = null;
+    private List<IRssChannel> listOfChannels = null;
+    private List<IRssItem>    listOfItems = null;
+
+    public List<IRssChannel> getListOfChannels() {
+        return listOfChannels;
+    }
+
+    SubMenu submenuChannels = null;
 
     private DrawerLayout drawer;
     private ListView mDrawerList;
@@ -44,10 +57,6 @@ public class MainActivity extends AppCompatActivity
             @Override public String getLink() {
                 return "http://static.feed.rbc.ru/rbc/logical/footer/news.rss";
             }
-
-            @Override
-            public Date getPubDate() { return new Date(); }
-
         };
 
         listOfChannels = new ArrayList<IRssChannel>();
@@ -57,9 +66,7 @@ public class MainActivity extends AppCompatActivity
                                @Override public String getLink() {
                                    return "http://www.interfax.ru/rss.asp";
                                }
-                             @Override
-                               public Date getPubDate() { return new Date(); }
-                          }
+                            }
 
         );
 
@@ -70,7 +77,9 @@ public class MainActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
 
-        testInitializer();
+        //testInitializer(); //in debug
+        listOfChannels = new ArrayList<IRssChannel>();
+        restoreChannelsList();
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -98,7 +107,6 @@ public class MainActivity extends AppCompatActivity
 
         if(listOfItems != null){
             mDrawerList.setAdapter(new ArrayAdapter<IRssItem>(this, R.layout.drawer_list_item, listOfItems ));
-            drawer.openDrawer(GravityCompat.START);
             mDrawerList.setOnItemClickListener(this);
         }
 
@@ -132,6 +140,9 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        MenuItem newsItem = menu.findItem(R.id.action_news_channel);
+        if(newsItem.hasSubMenu())  submenuChannels = newsItem.getSubMenu();
         return true;
     }
 
@@ -155,17 +166,21 @@ public class MainActivity extends AppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
 
         boolean result = super.onPrepareOptionsMenu(menu);
-        if( result && listOfChannels != null && !listOfChannels.isEmpty()){
-          MenuItem newsItem = menu.findItem(R.id.action_news_channel);
-          if(newsItem.hasSubMenu()){
-              SubMenu submenu = newsItem.getSubMenu();
-              for(int i=0; i < listOfChannels.size(); i++){
-                  submenu.add( Menu.NONE , i, i, listOfChannels.get(i).getName());
-              }
-          }
+        if(result) {
+            prepareChannelsSubmenu(submenuChannels);
         }
         return result;
     }
+
+    private void prepareChannelsSubmenu(SubMenu submenu){
+            if(submenu == null) return;
+            submenu.clear();
+            if(listOfChannels != null && !listOfChannels.isEmpty()){
+                for(int i=0; i < listOfChannels.size(); i++){
+                    submenu.add( Menu.NONE, i, i, listOfChannels.get(i).getName());
+                }
+            }
+     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -174,7 +189,13 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         //Settings has unique Id
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_add_channel) {
+            DialogFragment dialogFragment = new AddChannelDialogFragment();
+            dialogFragment.show(getFragmentManager(),"addChan");
+            return true;
+        }else if(id == R.id.action_delete_channel){
+            DialogFragment dialogFragment = new DeleteChannelDialogFragment();
+            dialogFragment.show(getFragmentManager(),"delChan");
             return true;
         }
         // Other is the position of news channel in the list:
@@ -216,6 +237,21 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    public void onAddNewsChannel(IRssChannel channel) {
+        listOfChannels.add(channel);
+        prepareChannelsSubmenu(submenuChannels);
+        saveChannelsList();
+    }
+
+    @Override
+    public void onDeleteNewsChannel(List<IRssChannel> newListOfCahnnels) {
+        listOfChannels = newListOfCahnnels;
+        prepareChannelsSubmenu(submenuChannels);
+        saveChannelsList();
+    }
+
+
     // ========== Implement DownloadCallback<UpdateChannelResult> =========
 
     /**
@@ -230,6 +266,7 @@ public class MainActivity extends AppCompatActivity
         if(e == null){
             listOfItems = result.getResult();
             updateNavigationDrawer(listOfItems);
+            drawer.openDrawer(GravityCompat.START);
         }else{
             Log.e("Update News Channel", e.getMessage(), e);
         }
@@ -263,5 +300,41 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    // ================= State Persistence =========================
 
-}
+    /**
+     * save list of selected new channels into file
+     */
+    private void saveChannelsList(){
+        try {
+            FileOutputStream file = openFileOutput(CHANNELS_FILE, MODE_PRIVATE);
+            if(file != null){
+                ObjectOutputStream out = new ObjectOutputStream(file);
+                out.writeObject(listOfChannels);
+            }else{
+                Toast.makeText(this, "Unable to save list of channels to persistent storage", Toast.LENGTH_SHORT ).show();
+            }
+        } catch (IOException e) {
+            Log.e("saveChannelSelection", e.getMessage(), e);
+
+        }
+    }
+
+    /**
+     * restore list of selected items from file
+     */
+    private void restoreChannelsList(){
+        try {
+            FileInputStream file = openFileInput(CHANNELS_FILE);
+            if(file != null){
+                ObjectInputStream in = new ObjectInputStream(file);
+                listOfChannels = (ArrayList<IRssChannel>)in.readObject();
+            }
+        } catch (Exception e) {
+            Log.e("restoreChannelSelection", e.getMessage(), e);
+        }
+
+    }
+
+
+  }

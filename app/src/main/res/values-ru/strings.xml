@@ -3,6 +3,14 @@
     <string name="app_name">Новости Для Бабушки</string>
     <string name="navigation_drawer_open">Открыть новостную ленту</string>
     <string name="navigation_drawer_close">Закрыть новостную ленту</string>
-    <string name="action_settings">Установки</string>
+    <string name="action_add_channel">Добавить Новостной Канал</string>
     <string name="action_news_channel">Новостные Каналы</string>
+    <string name="channel_name">Новостной Канал</string>
+    <string name="channel_url">URL канала</string>
+    <string name="add">Добавить</string>
+    <string name="cancel">Отмена</string>
+    <string name="title_add_channel">Добавить Канал</string>
+    <string name="action_delete_channel">Удалить Канал</string>
+    <string name="title_delete_channel">Удалить Канал</string>
+    <string name="delete">Удалить</string>
 </resources>
