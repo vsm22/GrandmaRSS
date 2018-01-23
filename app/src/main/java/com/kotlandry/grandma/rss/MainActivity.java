@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout drawer;
     private ListView mDrawerList;
 
+    /*
     private void testInitializer(){
 
         currentChannel = new IRssChannel() {
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity
         );
 
     }
+    */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,10 +96,41 @@ public class MainActivity extends AppCompatActivity
         mDrawerList   = (ListView)findViewById(R.id.nav_view);
 
         updateNavigationDrawer(listOfItems);
-        updateNewsChannel(currentChannel);
 
     }
 
+
+    /**
+     * This method is called after {@link #onStart} when the activity is
+     * being re-initialized from a previously saved state, given here in
+     * <var>savedInstanceState</var>.  Most implementations will simply use {@link #onCreate}
+     * to restore their state, but it is sometimes convenient to do it here
+     * after all of the initialization has been done or to allow subclasses to
+     * decide whether to use your default implementation.  The default
+     * implementation of this method performs a restore of any view state that
+     * had previously been frozen by {@link #onSaveInstanceState}.
+     * <p>
+     * <p>This method is called between {@link #onStart} and
+     * {@link #onPostCreate}.
+     *
+     * @param savedInstanceState the data most recently supplied in {@link #onSaveInstanceState}.
+     * @see #onCreate
+     * @see #onPostCreate
+     * @see #onResume
+     * @see #onSaveInstanceState
+     */
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        currentChannel = (IRssChannel) savedInstanceState.getSerializable("currentChannel");
+        updateNewsChannel(currentChannel);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("currentChannel", currentChannel);
+    }
 
     /** Update Navigation Drawer with a new list of Rss Items
      *
@@ -117,6 +150,7 @@ public class MainActivity extends AppCompatActivity
      */
     private void updateNewsChannel(IRssChannel newsChannel){
         if(newsChannel == null) return;
+        getSupportActionBar().setTitle(currentChannel.getName());
         UpdateChannelAsyncTask task = new UpdateChannelAsyncTask(this);
         task.execute(newsChannel);
     }
@@ -201,7 +235,6 @@ public class MainActivity extends AppCompatActivity
         // Other is the position of news channel in the list:
         if( id >=0 && id < listOfChannels.size() ){
             currentChannel = listOfChannels.get(id);
-            getSupportActionBar().setTitle(currentChannel.getName());
             updateNewsChannel(currentChannel);
             return true;
         }
